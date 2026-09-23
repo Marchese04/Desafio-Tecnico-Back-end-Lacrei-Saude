@@ -38,7 +38,7 @@ public class MedicoService {
     * e transforma em uma stream meio que faz um fluxo automatico, depois o ".map" para cada objeto que passa pelo steam ele acessa o mapper e aplica
     * o toResponse que seria nosso metodo que exibe somente as informações pedidas e transformando em um "MedicoRespondeDTO" e por ultimo o ".collect"
     * ele pega esse processo e transforma em uma lista*/
-    public List<MedicoResponseDTO> MostraMedicos(){
+    public List<MedicoResponseDTO> mostraMedicos(){
         List<Medico> medicoList = medicoRepository.findAll();
         return medicoList.stream()
                 .map(MedicoMapper :: toResponseDTO)
@@ -47,7 +47,7 @@ public class MedicoService {
     /*Bom, aqui eu fiz um metodo para mostrar o metodo pelo id, o optional serve para pegar ou não o medico pelo id, a magica tá no return
     * no return usamos mais uma vez o ".map" que eu expliquei no comentario de cima, e aqui temos o ".orElseThrow" que serve para caso o
     * optional não pegue ninguem ele ira exibir um erro na requisição e não apenas um vazio */
-    public MedicoResponseDTO MostraMedicosId (Long id){
+    public MedicoResponseDTO mostraMedicosId (Long id){
         Optional<Medico> medicoPeloId = medicoRepository.findById(id);
         return medicoPeloId.map(MedicoMapper ::toResponseDTO) .orElseThrow();
     }
@@ -57,5 +57,30 @@ public class MedicoService {
         Optional<Medico> exististeMedico = medicoRepository.findById(id);
         exististeMedico.orElseThrow();
         medicoRepository.deleteById(id);
+    }
+
+    /*esse aqui foi dificil kkkkkk, minha primeira vez fazendo um metodo de atualização usando records, mas aqui eu declaro por onde vamos pegar os dados
+    * "MedicoRespondeDTO" depois dou o nome do metodo e os parametros utilizados, o Long e id e depois o DTO que usamos para criar os objetos, dai,
+    * fazemos um optiona que checa se o id tem um objeto alocado a ele no banco de dados  e depois declaramos esse objeto com uma nova variavel e um
+    * ".orElseThrow" que caso não exista o objeto ele já ira dar erro, depois eu faço varios "if" para que eu possa verificar se o usuario esta passando
+    * algum dado ou não, se sim ele ira mudar o dado que ja existe pra esse novo, se não ele só pula pro proximo basicamente "se for diferente faça isso",
+    * por fim eu pego esse novo objeto e salvo e depois uso o metodo do mapper que fizemos para exibir as informações que o desafio pedia para exibir*/
+    public MedicoResponseDTO alterarDados (Long id, MedicoRequestDTO medicoRequestDTO) {
+        Optional<Medico> medicoExiste = medicoRepository.findById(id);
+        Medico novoMedico = medicoExiste.orElseThrow();
+        if (medicoRequestDTO.numeroDeContato() != null) {
+            novoMedico.setNumeroDeContato(medicoRequestDTO.numeroDeContato());
+        }
+        if (medicoRequestDTO.name() != null) {
+            novoMedico.setName(medicoRequestDTO.name());
+        }
+        if (medicoRequestDTO.profissao() != null) {
+            novoMedico.setProfissao(medicoRequestDTO.profissao());
+        }
+        if (medicoRequestDTO.endereco() != null) {
+            novoMedico.setEndereco(medicoRequestDTO.endereco());
+        }
+        novoMedico = medicoRepository.save(novoMedico);
+        return MedicoMapper.toResponseDTO(novoMedico);
     }
 }
